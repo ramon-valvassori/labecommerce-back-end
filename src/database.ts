@@ -63,6 +63,4 @@ export const searchProductsByName = (name: string): TProducts[] => {
     return results;
   };
   
-  const results = searchProductsByName("gamer");
   
-  console.log(results);

@@ -5,6 +5,7 @@ import {
   createProduct,
   getAllUsers,
   getAllProducts,
+  searchProductsByName
 } from "./database";
 
 const newUser = {
@@ -28,11 +29,15 @@ const newProduct = {
 
 const updatedProducts = createProduct(newProduct);
 
+const results = searchProductsByName("gamer");
+  
+  
+
 //console.log(users);
 //console.log(products);
 //console.log(updatedUsers);
 //console.log(updatedProducts);
-console.log(getAllUsers());
-console.log(getAllProducts());
-
+//console.log(getAllUsers());
+//console.log(getAllProducts());
+console.log(results);
 
