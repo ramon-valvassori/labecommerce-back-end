@@ -6,7 +6,7 @@ CREATE TABLE users (
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    created_at TEXT NOT NULL
+    created_at TEXT DEFAULT (DATETIME('now', 'localtime'))
 );
 
 /*Deleta tabela*/
@@ -78,6 +78,8 @@ CREATE TABLE purchases (
     total_price REAL NOT NULL,
     created_at TEXT NOT NULL,
     FOREIGN KEY(buyer) REFERENCES users(id)
+    ON UPDATE CASCADE 
+	ON DELETE CASCADE
 );
 
 /*Deleta a tabela de purchases*/
@@ -105,6 +107,47 @@ SELECT purchases.id, users.id, users.name, users.email,
 purchases.id, purchases.total_price, purchases.created_at 
 FROM users INNER JOIN purchases ON users.id = 
 purchases.buyer;
+
+/*Cria a tabela purchases_products*/
+CREATE TABLE purchases_products (
+    purchase_id TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    quantity INTEGER NOT NULL,
+    FOREIGN KEY(purchase_id) REFERENCES purchases(id),
+    FOREIGN KEY(product_id) REFERENCES products(id)
+    ON UPDATE CASCADE 
+	ON DELETE CASCADE
+);
+
+/*Deleta a tabela purchases_products*/
+DROP TABLE purchases_products;
+
+/*Popula a tabela purchases_products*/
+INSERT INTO purchases_products
+VALUES
+('b001', 'c001', 2),
+('b002', 'c002', 3),
+('b003', 'c007', 5);
+
+SELECT * FROM products;
+
+SELECT * FROM purchases;
+
+SELECT * FROM purchases_products;
+
+
+SELECT * FROM purchases
+INNER JOIN purchases_products ON purchases_products.purchase_id = purchases.id
+INNER JOIN products ON products.id = purchases_products.product_id;
+
+
+
+
+
+
+
+
+
 
 
 
