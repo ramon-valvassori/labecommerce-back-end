@@ -146,4 +146,10 @@ Content-Type: application/json
 DELETE  http://localhost:3003/purchases/c001
 ###
 
+GET http://localhost:3003/purchases/pur001
+###
+
+POST http://localhost:3003/create-table-purchases_products
+###
+
 
