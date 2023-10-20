@@ -1,0 +1,149 @@
+GET http://localhost:3003/ping
+###
+
+POST http://localhost:3003/create-table-users
+###
+
+POST http://localhost:3003/users
+Content-Type: application/json
+
+{
+    "id": "u005",
+    "name": "Joaozinho",
+    "email": "joaozinho@hotmail.com",
+    "password":"123456"
+}
+###
+
+
+GET http://localhost:3003/users
+###
+
+DELETE http://localhost:3003/users/u005
+###
+
+PUT http://localhost:3003/users/u005
+Content-Type: application/json
+
+{
+    "newId": "u006",
+    "newName": "Amanda",
+    "newEmail": "amanda@hotmail.com",
+    "newPassword": "57894569"
+}
+###
+
+POST http://localhost:3003/create-table-products
+###
+
+GET http://localhost:3003/products
+###
+
+GET http://localhost:3003/products?name=Samsung
+###
+
+POST http://localhost:3003/products
+Content-Type: application/json
+
+{
+    "id": "p001",
+    "name": "Samsung Galaxy A34",
+    "price": 1599,
+    "description": "128GB 5G Tela 6.6'' Dual Chip 6GB RAM Câmera Tripla de até 48MP + Selfie 13MP Bateria de 5000mAh - Violeta",
+    "image_url": "https://m.media-amazon.com/images/I/61cx-e-3OqL._AC_SX679_.jpg"
+}
+###
+
+POST http://localhost:3003/products
+Content-Type: application/json
+
+{
+    "id": "p002",
+    "name": "Samsung Galaxy S23",
+    "price": 7199,
+    "description": "512GB Tela 6.8'' 12GB RAM IP68 Processador Qualcomm Snapdragon 8 Gen 2 Câmera Quádrupla de até 200MP + Selfie 12MP - Preto",
+    "image_url": "https://m.media-amazon.com/images/I/61aEbAwahaL._AC_SX679_.jpg"
+}
+###
+
+POST http://localhost:3003/products
+Content-Type: application/json
+
+{
+    "id": "p003",
+    "name": "Samsung Galaxy A14",
+    "price": 779,
+    "description": "64 GB Prata 4G Octa-Core 4GB RAM 6,6\" Câm. Tripla + Selfie 13MP Dual Chip",
+    "image_url": "https://a-static.mlcdn.com.br/800x560/smartphone-samsung-galaxy-a14-64-gb-prata-4g-octa-core-4gb-ram-66-cam-tripla-selfie-13mp-dual-chip/magazineluiza/237063400/e8788418bdfc17d9e587e6bd3570f058.jpg"
+}
+###
+
+POST http://localhost:3003/products
+Content-Type: application/json
+
+{
+    "id": "p004",
+    "name": "Samsung Galaxy A-33",
+    "price": 1884.99,
+    "description": "5 G, 128 Gb, Dual - Sm-A336Mzwlzto, Branco, Quadriband",
+    "image_url": "https://m.media-amazon.com/images/I/611BL0R8ZfL._AC_SX679_.jpg"
+}
+###
+
+POST http://localhost:3003/products
+Content-Type: application-json
+
+{
+    "id": "p005",
+    "name": "Samsung Galaxy A-53",
+    "price": 2599,
+    "description": "28 Gb, Dual - Sm-A536Ezoszto, Rosa, Quadriband",
+    "image_url": "https://m.media-amazon.com/images/I/61CjwysSH5L._AC_SX679_.jpg"
+}
+###
+
+DELETE http://localhost:3003/product/p001
+###
+
+PUT http://localhost:3003/product/p001
+Content-Type: application/json
+
+{
+    "newId": "u006",
+    "newName": "Sansumg A330",
+    "newPrice": "8599",
+    "newDescription": "5g, 256 hd, preto ",
+    "newUrl": "www.celuarpreto.com"
+}
+###
+
+POST http://localhost:3003/create-table-purchases
+###
+
+GET http://localhost:3003/purchases
+###
+
+POST http://localhost:3003/purchases
+Content-Type: application/json
+
+{
+    "id": "pur004",
+    "buyer": "u005",
+    "products": [
+        {
+            "id": "p001",
+            "quantity": 2
+        },
+        {
+            "id": "p002",
+            "quantity": 1
+        }
+    ]
+}
+
+###
+
+DELETE  http://localhost:3003/purchases/c001
+###
+
+
