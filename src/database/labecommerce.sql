@@ -6,7 +6,7 @@ CREATE TABLE users (
     name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
-    created_at TEXT NOT NULL
+    created_at TEXT DEFAULT (DATETIME('now', 'localtime'))
 );
 
 /*Deleta tabela*/
@@ -70,5 +70,85 @@ WHERE id = '001';
 UPDATE products
 SET id = "c007", name = "Samsung Galaxy S25", price = 1299, description = "5g, 128gb, Dual, Azul", image_url = "https://a-static.mlcdn.com.br/800x560/smartphone-samsung-galaxy-a23-128gb-azul-5g-octa-core-4gb-ram-66-cam-quadrupla-selfie-8mp/magazineluiza/236591700/106db1960e6710f5351bbc4986567956.jpg"
 WHERE id = "c003";
+
+/*Cria tabela de purchases*/
+CREATE TABLE purchases (
+    id TEXT PRIMARY KEY UNIQUE NOT NULL,
+    buyer TEXT NOT NULL,
+    total_price REAL NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY(buyer) REFERENCES users(id)
+    ON UPDATE CASCADE 
+	ON DELETE CASCADE
+);
+
+/*Deleta a tabela de purchases*/
+DROP TABLE purchases;
+
+/*Popula a tabela purchases*/
+INSERT INTO purchases 
+VALUES
+('b001', 'u001', 1599, '28/09/2011'),
+('b002', 'u002', 7199, '15/04/2021'),
+('b003', 'u003', 779, '10/10/2020');
+
+/*Edita o preço de um pedido pelo id*/
+UPDATE purchases
+SET total_price = 1000
+WHERE id = 'p001';
+
+/*Select com InnerJoin para unir os campos
+id de quem fez a compra
+nome de quem fez a compra
+email de quem fez a compra
+preço total da compra
+data da compra*/
+SELECT purchases.id, users.id, users.name, users.email, 
+purchases.id, purchases.total_price, purchases.created_at 
+FROM users INNER JOIN purchases ON users.id = 
+purchases.buyer;
+
+/*Cria a tabela purchases_products*/
+CREATE TABLE purchases_products (
+    purchase_id TEXT NOT NULL,
+    product_id TEXT NOT NULL,
+    quantity INTEGER NOT NULL,
+    FOREIGN KEY(purchase_id) REFERENCES purchases(id),
+    FOREIGN KEY(product_id) REFERENCES products(id)
+    ON UPDATE CASCADE 
+	ON DELETE CASCADE
+);
+
+/*Deleta a tabela purchases_products*/
+DROP TABLE purchases_products;
+
+/*Popula a tabela purchases_products*/
+INSERT INTO purchases_products
+VALUES
+('b001', 'c001', 2),
+('b002', 'c002', 3),
+('b003', 'c007', 5);
+
+SELECT * FROM products;
+
+SELECT * FROM purchases;
+
+SELECT * FROM purchases_products;
+
+
+SELECT * FROM purchases
+INNER JOIN purchases_products ON purchases_products.purchase_id = purchases.id
+INNER JOIN products ON products.id = purchases_products.product_id;
+
+
+
+
+
+
+
+
+
+
+
 
 
