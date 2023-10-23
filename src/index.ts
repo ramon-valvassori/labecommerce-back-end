@@ -1,6 +1,7 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import { db } from "./database/knex";
+import { Product } from "./types";
 
 const app = express();
 
@@ -73,7 +74,7 @@ app.post("/users", async (req: Request, res: Response) => {
     return;
   }
 
-  const createdAt = new Date().toISOString();
+
 
   try {
     await db
@@ -81,8 +82,8 @@ app.post("/users", async (req: Request, res: Response) => {
         id: id,
         name: name,
         email: email,
-        password: password,
-        created_at: createdAt,
+        password: password
+        
       })
       .into("users");
 
@@ -319,107 +320,13 @@ app.delete("/products/:id", async (req: Request, res: Response) => {
   }
 });
 
-app.put("/product/:id", async (req: Request, res: Response) => {
-  try {
-    const id = req.params.id;
-
-    const newId = req.body.id;
-    const newName = req.body.name;
-    const newPrice = req.body.price;
-    const newDescription = req.body.description;
-    const newImage_url = req.body.image_url;
-
-    if (newId !== undefined) {
-      if (typeof newId !== "string") {
-        res.status(400);
-        throw new Error("'id' deve ser string");
-      }
-
-      if (newId.length < 1) {
-        res.status(400);
-        throw new Error("'id' deve possuir no mínimo 1 caractere");
-      }
-    }
-
-    if (newName !== undefined) {
-      if (typeof newName !== "string") {
-        res.status(400);
-        throw new Error("'name' deve ser string");
-      }
-
-      if (newName.length < 2) {
-        res.status(400);
-        throw new Error("'name' deve possuir no mínimo 2 caracteres");
-      }
-    }
-
-    if (newPrice !== undefined) {
-      if (typeof newPrice !== "number") {
-        res.status(400);
-        throw new Error("'Price' deve ser um number");
-      }
-    }
-
-    if (newDescription !== undefined) {
-      if (typeof newDescription !== "string") {
-        res.status(400);
-        throw new Error("'description' deve ser uma string");
-      }
-    }
-
-    if (newImage_url !== undefined) {
-      if (typeof newPrice !== "string") {
-        res.status(400);
-        throw new Error("'Image_url' deve ser uma string");
-      }
-    }
-
-    const [product] = await db.raw(`
-        SELECT * FROM products
-        WHERE id = "${id}";
-      `);
-
-    if (product) {
-      await db.raw(`
-            UPDATE products
-            SET
-              id = "${newId || product.id}",
-              name = "${newName || product.name}",
-              price = "${newPrice || product.price}",
-              description = "${newDescription || product.description}",
-              image_url = "${newImage_url || product.image_url}"
-            WHERE
-              id = "${id}";
-          `);
-    } else {
-      res.status(404);
-      throw new Error("'id' não encontrada");
-    }
-
-    res.status(200).send({ message: "Atualização realizada com sucesso" });
-  } catch (error) {
-    console.log(error);
-
-    if (res.statusCode === 200) {
-      res.status(500);
-    }
-
-    if (error instanceof Error) {
-      res.send(error.message);
-    } else {
-      res.send("Erro inesperado");
-    }
-  }
-});
-
 // Purchases
 
 app.get("/purchases", async (req: Request, res: Response) => {
   try {
-    const result = await db.raw(`
-          SELECT * FROM purchases
-        `);
+    let query = "SELECT * FROM purchases";
 
+    const result = await db.raw(query);
     res.status(200).send(result);
   } catch (error) {
     console.log(error);
@@ -439,20 +346,45 @@ app.get("/purchases", async (req: Request, res: Response) => {
 app.post("/create-table-purchases", async (req: Request, res: Response) => {
   try {
     await db.raw(`
-        CREATE TABLE purchase_products (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            purchase_id TEXT,
-            product_id TEXT,
-            quantity INTEGER,
-            FOREIGN KEY(purchase_id) REFERENCES purchases(id),
-            FOREIGN KEY(product_id) REFERENCES products(id)
-            ON UPDATE CASCADE 
-	ON DELETE CASCADE
-        );
-        
+            CREATE TABLE purchases (
+                id TEXT PRIMARY KEY,
+                buyer TEXT NOT NULL,
+                created_at TEXT DEFAULT (DATETIME('now', 'localtime'))
+                FOREIGN KEY(buyer) REFERENCES users(id)
+                ON UPDATE CASCADE 
+                ON DELETE CASCADE
+                )
         `);
 
-    res.send("Tabela purchases criada com sucesso!");
+    res.status(201).json({ message: "Tabela 'purchases' criada com sucesso." });
+  } catch (error: any) {
+    console.error(error.message);
+    res
+      .status(500)
+      .json({ error: "Erro interno do servidor ao criar a tabela." });
+  }
+});
+
+app.delete("/purchases/:id", async (req: Request, res: Response) => {
+  try {
+    const idToDelete = req.params.id;
+
+    const [purchase] = await db.raw(`
+                SELECT * FROM purchases
+                WHERE id = "${idToDelete}";
+              `);
+
+    if (!purchase) {
+      res.status(404);
+      throw new Error("'id' não encontrada");
+    }
+
+    await db.raw(`
+                DELETE FROM purchases
+                WHERE id = "${idToDelete}";
+              `);
+
+    res.status(200).send({ message: "Compra deletada com sucesso" });
   } catch (error) {
     console.log(error);
 
@@ -469,61 +401,29 @@ app.post("/create-table-purchases", async (req: Request, res: Response) => {
 });
 
 app.post("/purchases", async (req: Request, res: Response) => {
+  const { id, buyer, products } = req.body;
+
+  if (!id || !buyer || !products) {
+    res.status(400).json({ error: "Todos os campos são obrigatórios." });
+    return;
+  }
+
+  const query = `INSERT INTO products (id,buyer, products) VALUES (?, ?, ?)`;
+
+  if (query.length > 0) {
+    res.status(400).json({ error: "ID já está em uso." });
+    return;
+  }
+
   try {
-    const { id, buyer, products } = req.body;
+    await db.raw(query, [id, buyer, products]);
 
-    if (
-      !id ||
-      !buyer ||
-      !products ||
-      !Array.isArray(products) ||
-      products.length === 0
-    ) {
-      res.status(400).json({ error: "Pedido inválido." });
-      return;
-    }
-
-    const buyerExists = await db.raw("SELECT * FROM users WHERE id = ?", [
-      buyer,
-    ]);
-
-    if (!buyerExists || !buyerExists.length) {
-      res.status(400).json({ error: "Comprador não encontrado." });
-      return;
-    }
-
-    for (const product of products) {
-      const { id: productId, quantity } = product;
-      const productExists = await db.raw(
-        "SELECT * FROM products WHERE id = ?",
-        [productId]
-      );
-
-      if (!productExists || !productExists.length) {
-        res
-          .status(400)
-          .json({ error: `Produto com ID ${productId} não encontrado.` });
-        return;
-      }
-    }
-
-    const createdAt = new Date().toISOString();
-    const total_price = calculateTotalPrice(products);
-    await db.raw(
-      "INSERT INTO purchases (id, buyer, total_price, created_at) VALUES (?, ?, ?, ?)",
-      [id, buyer, total_price, createdAt]
-    );
-
-    res.status(201).json({ message: "Pedido realizado com sucesso" });
+    res.status(201).json("Produto Cadastrado com sucesso");
   } catch (error: any) {
     console.error(error.message);
     res.status(500).json({ error: "Erro interno do servidor." });
   }
 });
-
-function calculateTotalPrice(products: any[]): number {
-  return 0;
-}
 
 app.delete("/purchases/:id", async (req: Request, res: Response) => {
   try {
@@ -561,101 +461,51 @@ app.delete("/purchases/:id", async (req: Request, res: Response) => {
 });
 
 app.get("/purchases/:id", async (req: Request, res: Response) => {
-    const purchaseId = req.params.id;
-  
-    try {
-     
-      const purchaseDetails = await db.raw(`
-        SELECT purchases.id AS purchaseId, users.id AS buyerId, users.name AS buyerName, users.email AS buyerEmail, 
-        purchases.total_price AS totalPrice, purchases.created_at AS createdAt
-        FROM users 
-        INNER JOIN purchases ON users.id = purchases.buyer
-        WHERE purchases.id = ?;
-      `, [purchaseId]);
-  
-     
-      const products = await db.raw(`
-        SELECT products.id, products.name, products.price, products.description, products.image_url AS imageUrl,
-        purchase_products.quantity
-        FROM products
-        INNER JOIN purchase_products ON products.id = purchase_products.product_id
-        WHERE purchase_products.purchase_id = ?;
-      `, [purchaseId]);
-  
-      
-      const response = {
-        purchaseId: purchaseDetails[0].purchaseId,
-        buyerId: purchaseDetails[0].buyerId,
-        buyerName: purchaseDetails[0].buyerName,
-        buyerEmail: purchaseDetails[0].buyerEmail,
-        totalPrice: purchaseDetails[0].totalPrice,
-        createdAt: purchaseDetails[0].createdAt,
-        products: products,
-      };
-  
-      res.status(200).json(response);
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: "Erro interno do servidor." });
-    }
-  });
-  
+  const purchaseId = req.params.id;
 
+  try {
+    const purchaseDetails = await db.raw(
+      `
+              SELECT purchases.id AS purchaseId, users.id AS buyerId, users.name AS buyerName, users.email AS buyerEmail, 
+              purchases.created_at AS createdAt
+              FROM users 
+              INNER JOIN purchases ON users.id = purchases.buyer
+              WHERE purchases.id = ?;
+            `,
+      [purchaseId]
+    );
 
+    const products = await db.raw(
+      `
+              SELECT products.id, products.name, products.price, products.description, products.image_url AS imageUrl,
+              purchase_products.quantity
+              FROM products
+              INNER JOIN purchase_products ON products.id = purchase_products.product_id
+              WHERE purchase_products.purchase_id = ?;
+            `,
+      [purchaseId]
+    );
 
-app.post("/create-table-purchases_products", async (req: Request, res: Response) => {
-    try {
-      await db.raw(`
-     
-  CREATE TABLE purchases_products (
-    purchase_id TEXT NOT NULL,
-    product_id TEXT NOT NULL,
-    quantity INTEGER NOT NULL,
-    FOREIGN KEY(purchase_id) REFERENCES purchases(id),
-    FOREIGN KEY(product_id) REFERENCES products(id)
-    ON UPDATE CASCADE 
-	ON DELETE CASCADE
-          );
-          
-          `);
-  
-      res.send("Tabela purchase_products criada com sucesso!");
-    } catch (error) {
-      console.log(error);
-  
-      if (res.statusCode === 200) {
-        res.status(500);
-      }
-  
-      if (error instanceof Error) {
-        res.send(error.message);
-      } else {
-        res.send("Erro inesperado");
-      }
-    }
-  });
+    const totalPrice: number = products.reduce(
+      (acc: number, product: Product) => {
+        return acc + product.price * product.quantity;
+      },
+      0
+    );
 
-  app.post("/purchase_products", async (req: Request, res: Response) => {
-    const { purchase_id, product_id, quantity } = req.body;
-  
-    if (!purchase_id || product_id || !quantity) {
-      res.status(400).json({ error: "Todos os campos são obrigatórios." });
-      return;
-    }
-  
-    const query = `INSERT INTO purchase_products (purchase_id, product_id, quantity) VALUES (?, ?, ?)`;
-  
-    if (query.length > 0) {
-      res.status(400).json({ error: "ID já está em uso." });
-      return;
-    }
-  
-    try {
-      await db.raw(query, [purchase_id, product_id, quantity]);
-  
-      res.status(201).json("Sucesso");
-    } catch (error: any) {
-      console.error(error.message);
-      res.status(500).json({ error: "Erro interno do servidor." });
-    }
-  });
+    const response = {
+      purchaseId: purchaseDetails[0].purchaseId,
+      buyerId: purchaseDetails[0].buyerId,
+      buyerName: purchaseDetails[0].buyerName,
+      buyerEmail: purchaseDetails[0].buyerEmail,
+      totalPrice: totalPrice,
+      createdAt: purchaseDetails[0].createdAt,
+      products: products,
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro interno do servidor." });
+  }
+});

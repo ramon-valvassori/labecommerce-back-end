@@ -15,8 +15,17 @@ export type TProducts = {
 };
 
 export type TPurchases = {
-  id: string,
-  buyer: string,
-  total_price: string,
+  id: string;
+  buyer: string;
+  total_price: string;
   created_at: string;
+};
+
+export interface Product {
+  id: number;
+  name: string;
+  price: number;
+  description: string;
+  imageUrl: string;
+  quantity: number;
 }
