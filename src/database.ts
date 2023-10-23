@@ -33,3 +33,34 @@ export const products: TProducts[] = [
     imageUrl: "https://picsum.photos/seed/Monitor/400",
   },
 ];
+
+export const createUser = (newUser: TUsers): TUsers[] => {
+  users.push(newUser);
+  console.log("Cadastro realizado com sucesso");
+
+  return users;
+};
+
+export const getAllUsers = (): TUsers[] => {
+  return users;
+};
+
+export const createProduct = (newProducts: TProducts): TProducts[] => {
+    products.push(newProducts);
+    console.log("Produto criado com sucesso");
+    
+    return products;
+}
+
+export const getAllProducts= (): TProducts[] => {
+    return products;
+  };
+
+export const searchProductsByName = (name: string): TProducts[] => {
+  
+    const results = getAllProducts().filter((product) => product.name.includes(name));
+   
+    return results;
+  };
+  
+  
