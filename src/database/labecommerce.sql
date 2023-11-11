@@ -1,4 +1,4 @@
--- Active: 1695758877062@@127.0.0.1@3306
+-- Active: 1699714346574@@127.0.0.1@3306
 
 /*Cria tabela users*/
 CREATE TABLE users (

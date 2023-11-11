@@ -318,7 +318,7 @@ app.delete("/products/:id", async (req: Request, res: Response) => {
   }
 });
 
-app.put("/product/:id", async (req: Request, res: Response) => {
+app.put("/products/:id", async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
 
@@ -435,6 +435,36 @@ app.get("/purchases", async (req: Request, res: Response) => {
   }
 });
 
+app.get("/purchases/:id", async (req: Request, res: Response) => {
+  try {
+    const id = req.params.id;
+    const result = await db.raw(`
+          SELECT * FROM purchases
+          WHERE id = ?
+        `, [id]);
+
+    if (result.length === 0) {
+      res.status(404).send("Purchase não encontrada");
+      return;
+    }
+
+    res.status(200).send(result[0]);
+  } catch (error) {
+    console.log(error);
+
+    if (res.statusCode === 200) {
+      res.status(500);
+    }
+
+    if (error instanceof Error) {
+      res.send(error.message);
+    } else {
+      res.send("Erro inesperado");
+    }
+  }
+});
+
+
 app.post("/create-table-purchases", async (req: Request, res: Response) => {
   try {
     await db.raw(`
@@ -467,14 +497,13 @@ app.post("/create-table-purchases", async (req: Request, res: Response) => {
 
 app.post("/purchases", async (req: Request, res: Response) => {
   try {
-    const { id, buyer, products } = req.body;
+    const { id, buyer, total_price, created_at } = req.body;
 
     if (
       !id ||
       !buyer ||
-      !products ||
-      !Array.isArray(products) ||
-      products.length === 0
+      !total_price ||
+      !created_at
     ) {
       res.status(400).json({ error: "Pedido inválido." });
       return;
@@ -489,35 +518,10 @@ app.post("/purchases", async (req: Request, res: Response) => {
       return;
     }
 
-    for (const product of products) {
-      const { id: productId, quantity } = product;
-      const productExists = await db.raw(
-        "SELECT * FROM products WHERE id = ?",
-        [productId]
-      );
-
-      if (!productExists || !productExists.length) {
-        res
-          .status(400)
-          .json({ error: `Produto com ID ${productId} não encontrado.` });
-        return;
-      }
-    }
-
-    const createdAt = new Date().toISOString();
-    const total_price = calculateTotalPrice(products);
     await db.raw(
       "INSERT INTO purchases (id, buyer, total_price, created_at) VALUES (?, ?, ?, ?)",
-      [id, buyer, total_price, createdAt]
+      [id, buyer, total_price, created_at]
     );
-
-    for (const product of products) {
-      const { id: productId, quantity } = product;
-      await db.raw(
-        "INSERT INTO purchase_products (purchase_id, product_id, quantity) VALUES (?, ?, ?)",
-        [id, productId, quantity]
-      );
-    }
 
     res.status(201).json({ message: "Pedido realizado com sucesso" });
   } catch (error: any) {
@@ -525,10 +529,6 @@ app.post("/purchases", async (req: Request, res: Response) => {
     res.status(500).json({ error: "Erro interno do servidor." });
   }
 });
-
-function calculateTotalPrice(products: any[]): number {
-  return 0;
-}
 
 app.delete("/purchases/:id", async (req: Request, res: Response) => {
   try {
